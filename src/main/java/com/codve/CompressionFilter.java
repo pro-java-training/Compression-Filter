@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.zip.GZIPOutputStream;
 
+// 压缩过滤器
 public class CompressionFilter implements Filter {
 
     @Override
@@ -69,6 +70,7 @@ public class CompressionFilter implements Filter {
         }
     }
 
+    // 压缩输出类
     private static class GZIPServletOutputStream extends ServletOutputStream {
         private final ServletOutputStream servletOutputStream;
         private final GZIPOutputStream gzipOutputStream;

@@ -15,6 +15,12 @@ public class Configurator implements ServletContextListener {
         // 默认处理普通请求
 
         registration = context.addFilter("compressionFilter", new CompressionFilter());
+        registration.setAsyncSupported(true);
+        registration.addMappingForUrlPatterns(null, false, "/*");
+    }
+
+    @Override
+    public void contextDestroyed(ServletContextEvent event) {
 
     }
 }
