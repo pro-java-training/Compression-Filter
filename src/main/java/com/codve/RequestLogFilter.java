@@ -31,9 +31,9 @@ public class RequestLogFilter implements Filter {
             if (length == null || length.length() == 0) {
                 length = "-";
             }
-            System.out.println(in.getRemoteAddr() + "--[" + time + "]" +
-                    "\"" + in.getMethod() + " " + in.getRequestURI() + " " +
-                    in.getProtocol() + "\"" + out.getStatus() + " " + length +
+            System.out.println(in.getRemoteAddr() + "- - [" + time + "]" +
+                    " \"" + in.getMethod() + " " + in.getRequestURI() + " " +
+                    in.getProtocol() + "\" " + out.getStatus() + " " + length +
                     " " + timer);
         }
     }

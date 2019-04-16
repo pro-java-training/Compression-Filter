@@ -13,16 +13,16 @@ import java.util.zip.GZIPOutputStream;
 public class CompressionFilter implements Filter {
 
     @Override
-    public void init(FilterConfig config) {
+    public void init(FilterConfig config) throws ServletException {
     }
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws ServletException, IOException {
-        if (((HttpServletRequest) request).getHeader("Accept-Encoding")
-                .contains("gzip")) {
-            ResponseWrapper wrapper =
-                    new ResponseWrapper((HttpServletResponse) response);
+        if (((HttpServletRequest) request).getHeader("Accept-Encoding").contains("gzip")) {
+            System.out.println("Encoding requested.");
+            ((HttpServletResponse) response).setHeader("Content-Encoding", "gzip");
+            ResponseWrapper wrapper = new ResponseWrapper((HttpServletResponse) response);
             try {
                 chain.doFilter(request, wrapper);
             } finally {
@@ -108,14 +108,14 @@ public class CompressionFilter implements Filter {
 
         @Override
         public void addHeader(String name, String value) {
-            if ("content-length".equalsIgnoreCase(name)) {
+            if (!"content-length".equalsIgnoreCase(name)) {
                 super.setHeader(name, value);
             }
         }
 
         @Override
         public void setIntHeader(String name, int value) {
-            if (!"content-lenght".equalsIgnoreCase(name)) {
+            if (!"content-length".equalsIgnoreCase(name)) {
                 super.setIntHeader(name, value);
             }
         }
@@ -131,13 +131,11 @@ public class CompressionFilter implements Filter {
             if (this.writer != null) {
                 this.writer.close();
             } else if (this.gzipServletOutputStream != null) {
-                this.gzipServletOutputStream.close();
+                this.gzipServletOutputStream.finish();
             }
         }
 
     }
-
-
 
     // 压缩输出类
     private static class GZIPServletOutputStream extends ServletOutputStream {
