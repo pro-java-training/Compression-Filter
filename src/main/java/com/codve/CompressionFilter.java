@@ -5,6 +5,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.zip.GZIPOutputStream;
 
@@ -43,7 +44,7 @@ public class CompressionFilter implements Filter {
     }
 
     private static class ResponseWrapper extends HttpServletResponseWrapper {
-        private GZIPServletOutputStream outputStream;
+        private GZIPServletOutputStream gzipServletOutputStream;
         private PrintWriter writer;
 
         public ResponseWrapper(HttpServletResponse request) {
@@ -52,23 +53,91 @@ public class CompressionFilter implements Filter {
 
         @Override
         public synchronized ServletOutputStream getOutputStream()
-            throws IOException {
+                throws IOException {
             if (this.writer != null) {
                 throw new IllegalStateException("getWriter() already called.");
             }
-            if (this.outputStream == null) {
-                this.outputStream =
+            if (this.gzipServletOutputStream == null) {
+                this.gzipServletOutputStream =
                         new GZIPServletOutputStream(super.getOutputStream());
             }
-            return this.outputStream;
+            return this.gzipServletOutputStream;
         }
+
+        @Override
+        public synchronized PrintWriter getWriter() throws IOException {
+            if (this.writer == null && this.gzipServletOutputStream != null) {
+                throw new IllegalStateException("getOutputStream() already called.");
+            }
+            if (this.writer == null) {
+                this.gzipServletOutputStream =
+                        new GZIPServletOutputStream(super.getOutputStream());
+                this.writer = new PrintWriter(new OutputStreamWriter(
+                        this.gzipServletOutputStream, this.getCharacterEncoding()
+                ));
+            }
+            return this.writer;
+        }
+
+        @Override
+        public void flushBuffer() throws IOException {
+            if (this.writer != null) {
+                this.writer.flush();
+            } else if (this.gzipServletOutputStream != null) {
+                this.gzipServletOutputStream.flush();
+            }
+            super.flushBuffer();
+        }
+
+        @Override
+        public void setContentLength(int length) {
+
+        }
+
+        @Override
+        public void setContentLengthLong(long length) {
+
+        }
+
+        @Override
+        public void setHeader(String name, String value) {
+            if (!"content-length".equalsIgnoreCase(name)) {
+                super.setHeader(name, value);
+            }
+        }
+
+        @Override
+        public void addHeader(String name, String value) {
+            if ("content-length".equalsIgnoreCase(name)) {
+                super.setHeader(name, value);
+            }
+        }
+
+        @Override
+        public void setIntHeader(String name, int value) {
+            if (!"content-lenght".equalsIgnoreCase(name)) {
+                super.setIntHeader(name, value);
+            }
+        }
+
+        @Override
+        public void addIntHeader(String name, int value) {
+            if (!"content-length".equalsIgnoreCase(name)) {
+                super.setIntHeader(name, value);
+            }
+        }
+
+        public void finish() throws IOException {
+            if (this.writer != null) {
+                this.writer.close();
+            } else if (this.gzipServletOutputStream != null) {
+                this.gzipServletOutputStream.close();
+            }
+        }
+
     }
 
-    @Override
-    public synchronized PrintWriter getWriter() throws IOException {
-        if (this.writer == null && this.outputStream != null) {
-        }
-    }
+
 
     // 压缩输出类
     private static class GZIPServletOutputStream extends ServletOutputStream {
